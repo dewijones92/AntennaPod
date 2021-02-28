@@ -132,7 +132,6 @@
         <item quantity="other">%d selected</item>
     </plurals>
     <plurals name="num_episodes">
-        <item quantity="zero">no episodes</item>
         <item quantity="one">%d episode</item>
         <item quantity="other">%d episodes</item>
     </plurals>
@@ -147,7 +146,7 @@
         <item quantity="one">New Episode</item>
         <item quantity="other">New Episodes</item>
     </plurals>
-    <string name="new_episode_notification_group_text">Your subscriptions have new epsiodes.</string>
+    <string name="new_episode_notification_group_text">Your subscriptions have new episodes.</string>
 
     <!-- Actions on feeds -->
     <string name="mark_all_read_label">Mark all as played</string>
@@ -457,7 +456,9 @@
     <string name="pref_episode_cache_title">Episode Cache</string>
     <string name="pref_episode_cache_summary">Total number of downloaded episodes cached on the device. Automatic download will be suspended if this number is reached.</string>
     <string name="pref_episode_cover_title">Use Episode Cover</string>
-    <string name="pref_episode_cover_summary">Use the episode specific cover whenever available. If unchecked, the app will always use the podcast cover image.</string>
+    <string name="pref_episode_cover_summary">Use the episode specific cover in lists whenever available. If unchecked, the app will always use the podcast cover image.</string>
+    <string name="pref_show_remain_time_title">Show Remaining Time</string>
+    <string name="pref_show_remain_time_summary">Display remaining time of episodes when checked. If unchecked, display total duration of episodes.</string>
     <string name="pref_theme_title_use_system">Use system theme</string>
     <string name="pref_theme_title_light">Light</string>
     <string name="pref_theme_title_dark">Dark</string>
@@ -653,6 +654,7 @@
     <string name="gpodnet_search_hint">Search gpodder.net</string>
     <string name="gpodnetauth_login_title">Login</string>
     <string name="gpodnetauth_login_butLabel">Login</string>
+    <string name="gpodnetauth_encryption_warning">Password and data are not encrypted!</string>
     <string name="create_account">Create account</string>
     <string name="username_label">Username</string>
     <string name="password_label">Password</string>
