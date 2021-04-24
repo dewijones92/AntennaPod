@@ -40,9 +40,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import de.danoeh.antennapod.core.event.DownloadEvent;
 import de.danoeh.antennapod.core.event.FeedItemEvent;
-import de.danoeh.antennapod.core.feed.Feed;
-import de.danoeh.antennapod.core.feed.FeedItem;
-import de.danoeh.antennapod.core.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.core.service.download.handler.FailedDownloadHandler;
 import de.danoeh.antennapod.core.service.download.handler.FeedSyncTask;
@@ -172,8 +172,7 @@ public class DownloadService extends Service {
             setupNotificationUpdaterIfNecessary();
             syncExecutor.execute(() -> onDownloadQueued(intent));
         } else if (numberOfDownloads.get() == 0) {
-            stopForeground(true);
-            stopSelf();
+            shutdown();
         } else {
             Log.d(TAG, "onStartCommand: Unknown intent");
         }
@@ -226,10 +225,6 @@ public class DownloadService extends Service {
             downloadPostFuture.cancel(true);
         }
         unregisterReceiver(cancelDownloadReceiver);
-
-        stopForeground(true);
-        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.cancel(R.id.notification_downloading);
 
         // if this was the initial gpodder sync, i.e. we just synced the feeds successfully,
         // it is now time to sync the episode actions
@@ -550,14 +545,7 @@ public class DownloadService extends Service {
 
         if (numberOfDownloads.get() <= 0 && DownloadRequester.getInstance().hasNoDownloads()) {
             Log.d(TAG, "Attempting shutdown");
-            stopForeground(true);
-            stopSelf();
-
-            // Trick to hide the notification more quickly when the service is stopped
-            // Without this, the second-last update of the notification stays for 3 seconds after onDestroy returns
-            notificationUpdater.run();
-            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            nm.cancel(R.id.notification_downloading);
+            shutdown();
         }
     }
 
@@ -646,5 +634,19 @@ public class DownloadService extends Service {
             downloadPostFuture = schedExecutor.scheduleAtFixedRate(
                     new PostDownloaderTask(downloads), 1, 1, TimeUnit.SECONDS);
         }
+    }
+
+    private void shutdown() {
+        // If the service was run for a very short time, the system may delay closing
+        // the notification. Set the notification text now so that a misleading message
+        // is not left on the notification.
+        if (notificationUpdater != null) {
+            notificationUpdater.run();
+        }
+        handler.post(() -> {
+            cancelNotificationUpdater();
+            stopForeground(true);
+            stopSelf();
+        });
     }
 }

@@ -1,4 +1,7 @@
 include ':app'
 include ':core'
+include ':model'
+include ':net:ssl'
 include ':ui:app-start-intent'
 include ':ui:common'
+include ':ui:png-icons'

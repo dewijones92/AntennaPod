@@ -13,14 +13,13 @@ import androidx.core.content.ContextCompat;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
 import de.danoeh.antennapod.core.dialog.DownloadRequestErrorDialogCreator;
-import de.danoeh.antennapod.core.feed.Feed;
-import de.danoeh.antennapod.core.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.core.service.download.DownloadStatus;
 import de.danoeh.antennapod.core.storage.DBReader;
 import de.danoeh.antennapod.core.storage.DBTasks;
 import de.danoeh.antennapod.core.storage.DownloadRequestException;
 import de.danoeh.antennapod.core.storage.DownloadRequester;
-import de.danoeh.antennapod.ui.common.ThemeUtils;
 import de.danoeh.antennapod.view.viewholder.DownloadItemViewHolder;
 
 /**
@@ -68,24 +67,21 @@ public class DownloadLogAdapter extends BaseAdapter {
             holder.icon.setContentDescription(context.getString(R.string.download_successful));
             holder.secondaryActionButton.setVisibility(View.INVISIBLE);
             holder.reason.setVisibility(View.GONE);
+            holder.tapForDetails.setVisibility(View.GONE);
         } else {
             holder.icon.setTextColor(ContextCompat.getColor(context, R.color.download_failed_red));
             holder.icon.setText("{fa-times-circle}");
             holder.icon.setContentDescription(context.getString(R.string.error_label));
-            String reasonText = status.getReason().getErrorString(context);
-            if (status.getReasonDetailed() != null) {
-                reasonText += ": " + status.getReasonDetailed();
-            }
-            holder.reason.setText(reasonText);
+            holder.reason.setText(status.getReason().getErrorString(context));
             holder.reason.setVisibility(View.VISIBLE);
+            holder.tapForDetails.setVisibility(View.VISIBLE);
 
             if (newerWasSuccessful(position, status.getFeedfileType(), status.getFeedfileId())) {
                 holder.secondaryActionButton.setVisibility(View.INVISIBLE);
                 holder.secondaryActionButton.setOnClickListener(null);
                 holder.secondaryActionButton.setTag(null);
             } else {
-                holder.secondaryActionIcon.setImageResource(
-                        ThemeUtils.getDrawableFromAttr(context, R.attr.navigation_refresh));
+                holder.secondaryActionIcon.setImageResource(R.drawable.ic_refresh);
                 holder.secondaryActionButton.setVisibility(View.VISIBLE);
 
                 if (status.getFeedfileType() == Feed.FEEDFILETYPE_FEED) {

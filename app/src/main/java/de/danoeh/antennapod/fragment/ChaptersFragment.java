@@ -14,10 +14,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.adapter.ChaptersListAdapter;
 import de.danoeh.antennapod.core.event.PlaybackPositionEvent;
-import de.danoeh.antennapod.core.feed.Chapter;
+import de.danoeh.antennapod.model.feed.Chapter;
 import de.danoeh.antennapod.core.service.playback.PlayerStatus;
 import de.danoeh.antennapod.core.util.ChapterUtils;
-import de.danoeh.antennapod.core.util.playback.Playable;
+import de.danoeh.antennapod.model.playback.Playable;
 import de.danoeh.antennapod.core.util.playback.PlaybackController;
 import de.danoeh.antennapod.view.EmptyViewHandler;
 import io.reactivex.Maybe;
@@ -60,7 +60,7 @@ public class ChaptersFragment extends Fragment {
 
         EmptyViewHandler emptyView = new EmptyViewHandler(getContext());
         emptyView.attachToRecyclerView(recyclerView);
-        emptyView.setIcon(R.attr.ic_bookmark);
+        emptyView.setIcon(R.drawable.ic_bookmark);
         emptyView.setTitle(R.string.no_chapters_head_label);
         emptyView.setMessage(R.string.no_chapters_label);
 
@@ -118,7 +118,7 @@ public class ChaptersFragment extends Fragment {
         disposable = Maybe.create(emitter -> {
             Playable media = controller.getMedia();
             if (media != null) {
-                media.loadChapterMarks(getContext());
+                ChapterUtils.loadChapters(media, getContext());
                 emitter.onSuccess(media);
             } else {
                 emitter.onComplete();
@@ -137,7 +137,6 @@ public class ChaptersFragment extends Fragment {
             return;
         }
         adapter.setMedia(media);
-        ((AudioPlayerFragment) getParentFragment()).setHasChapters(adapter.getItemCount() > 0);
         int positionOfCurrentChapter = getCurrentChapter(media);
         updateChapterSelection(positionOfCurrentChapter);
     }

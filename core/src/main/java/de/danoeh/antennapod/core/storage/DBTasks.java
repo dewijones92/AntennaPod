@@ -13,12 +13,13 @@ import de.danoeh.antennapod.core.R;
 import de.danoeh.antennapod.core.event.FeedItemEvent;
 import de.danoeh.antennapod.core.event.FeedListUpdateEvent;
 import de.danoeh.antennapod.core.event.MessageEvent;
-import de.danoeh.antennapod.core.feed.Feed;
-import de.danoeh.antennapod.core.feed.FeedItem;
-import de.danoeh.antennapod.core.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.FeedItem;
+import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.core.feed.LocalFeedUpdater;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.core.service.download.DownloadStatus;
+import de.danoeh.antennapod.core.storage.mapper.FeedCursorMapper;
 import de.danoeh.antennapod.core.sync.SyncService;
 import de.danoeh.antennapod.core.util.DownloadError;
 import de.danoeh.antennapod.core.util.LongList;
@@ -221,7 +222,7 @@ public final class DBTasks {
             }).start();
         }
         if (!normalFeeds.isEmpty()) {
-            DownloadRequester.getInstance().downloadFeeds(context, feeds, loadAllPages, force, initiatedByUser);
+            DownloadRequester.getInstance().downloadFeeds(context, normalFeeds, loadAllPages, force, initiatedByUser);
         }
     }
 
@@ -319,7 +320,7 @@ public final class DBTasks {
     private static Feed searchFeedByIdentifyingValueOrID(PodDBAdapter adapter,
                                                          Feed feed) {
         if (feed.getId() != 0) {
-            return DBReader.getFeed(feed.getId(), adapter);
+            return DBReader.getFeed(feed.getId());
         } else {
             List<Feed> feeds = DBReader.getFeedList();
             for (Feed f : feeds) {
@@ -516,7 +517,7 @@ public final class DBTasks {
                 List<Feed> items = new ArrayList<>();
                 if (cursor.moveToFirst()) {
                     do {
-                        items.add(Feed.fromCursor(cursor));
+                        items.add(FeedCursorMapper.convert(cursor));
                     } while (cursor.moveToNext());
                 }
                 setResult(items);
