@@ -1,7 +1,7 @@
 plugins {
     id('com.android.application')
     id('com.getkeepsafe.dexcount')
-    id('com.github.triplet.play') version '3.4.0' apply false
+    id('com.github.triplet.play') version '3.6.0-agp4.2' apply false
 }
 apply from: "../common.gradle"
 apply from: "../playFlavor.gradle"
@@ -76,9 +76,9 @@ android {
 
             dexcount {
                 if (project.hasProperty("enableDexcountInDebug")) {
-                    runOnEachPackage enableDexcountInDebug.toBoolean()
+                    runOnEachPackage = enableDexcountInDebug.toBoolean()
                 } else { // default to not running dexcount
-                    runOnEachPackage false
+                    runOnEachPackage = false
                 }
             }
         }
@@ -122,6 +122,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$appcompatVersion"
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
     implementation "androidx.core:core:$coreVersion"
+    implementation "androidx.fragment:fragment:$fragmentVersion"
     implementation 'androidx.gridlayout:gridlayout:1.0.0'
     implementation "androidx.media:media:$mediaVersion"
     implementation "androidx.preference:preference:$preferenceVersion"
