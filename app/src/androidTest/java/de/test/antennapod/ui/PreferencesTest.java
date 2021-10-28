@@ -126,8 +126,9 @@ public class PreferencesTest {
         clickPreference(R.string.user_interface_label);
         String[] buttons = res.getStringArray(R.array.compact_notification_buttons_options);
         clickPreference(R.string.pref_compact_notification_buttons_title);
-        // First uncheck checkbox
-        onView(withText(buttons[2])).perform(click());
+        // First uncheck checkboxes
+        onView(withText(buttons[0])).perform(click());
+        onView(withText(buttons[1])).perform(click());
 
         // Now try to check all checkboxes
         onView(withText(buttons[0])).perform(click());
@@ -244,9 +245,8 @@ public class PreferencesTest {
     public void testPlaybackSpeeds() {
         clickPreference(R.string.playback_pref);
         clickPreference(R.string.playback_speed);
-        onView(isRoot()).perform(waitForView(withText("0.75"), 1000));
-        onView(withText("0.75")).check(matches(isDisplayed()));
-        onView(withText(R.string.close_label)).perform(click());
+        onView(isRoot()).perform(waitForView(withText("1.25"), 1000));
+        onView(withText("1.25")).check(matches(isDisplayed()));
     }
 
     @Test

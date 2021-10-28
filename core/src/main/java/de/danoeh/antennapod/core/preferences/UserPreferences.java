@@ -207,7 +207,7 @@ public class UserPreferences {
     public static List<Integer> getCompactNotificationButtons() {
         String[] buttons = TextUtils.split(
                 prefs.getString(PREF_COMPACT_NOTIFICATION_BUTTONS,
-                        String.valueOf(NOTIFICATION_BUTTON_SKIP)),
+                        NOTIFICATION_BUTTON_REWIND + "," + NOTIFICATION_BUTTON_FAST_FORWARD),
                 ",");
         List<Integer> notificationButtons = new ArrayList<>();
         for (String button : buttons) {
@@ -610,6 +610,11 @@ public class UserPreferences {
     public static void setProxyConfig(ProxyConfig config) {
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(PREF_PROXY_TYPE, config.type.name());
+        Proxy.Type type = Proxy.Type.valueOf(config.type.name());
+        if (type == Proxy.Type.DIRECT) {
+            editor.apply();
+            return;
+        }
         if(TextUtils.isEmpty(config.host)) {
             editor.remove(PREF_PROXY_HOST);
         } else {
@@ -813,7 +818,7 @@ public class UserPreferences {
             }
         }
         // If this preference hasn't been set yet, return the default options
-        return Arrays.asList(0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f);
+        return Arrays.asList(1.0f, 1.25f, 1.5f);
     }
 
     public static String getMediaPlayer() {
