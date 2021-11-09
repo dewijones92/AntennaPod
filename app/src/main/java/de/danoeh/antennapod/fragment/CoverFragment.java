@@ -45,7 +45,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.activity.MainActivity;
-import de.danoeh.antennapod.core.event.PlaybackPositionEvent;
+import de.danoeh.antennapod.event.playback.PlaybackPositionEvent;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.core.feed.util.ImageResourceUtils;
 import de.danoeh.antennapod.core.glide.ApGlideSettings;
@@ -156,8 +156,13 @@ public class CoverFragment extends Fragment {
                 + "・"
                 + "\u00A0"
                 + StringUtils.replace(StringUtils.stripToEmpty(pubDateStr), " ", "\u00A0"));
-        Intent openFeed = MainActivity.getIntentToOpenFeed(requireContext(), ((FeedMedia) media).getItem().getFeedId());
-        txtvPodcastTitle.setOnClickListener(v -> startActivity(openFeed));
+        if (media instanceof FeedMedia) {
+            Intent openFeed = MainActivity.getIntentToOpenFeed(requireContext(),
+                    ((FeedMedia) media).getItem().getFeedId());
+            txtvPodcastTitle.setOnClickListener(v -> startActivity(openFeed));
+        } else {
+            txtvPodcastTitle.setOnClickListener(null);
+        }
         txtvPodcastTitle.setOnLongClickListener(v -> copyText(media.getFeedTitle()));
         txtvEpisodeTitle.setText(media.getEpisodeTitle());
         txtvEpisodeTitle.setOnLongClickListener(v -> copyText(media.getEpisodeTitle()));

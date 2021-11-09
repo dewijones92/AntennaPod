@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -19,6 +20,7 @@ import com.bumptech.glide.request.RequestOptions;
 import java.util.concurrent.TimeUnit;
 
 import de.danoeh.antennapod.core.R;
+import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.model.playback.MediaType;
 import de.danoeh.antennapod.core.glide.ApGlideSettings;
 import de.danoeh.antennapod.core.receiver.MediaButtonReceiver;
@@ -212,18 +214,21 @@ public abstract class WidgetUpdater {
         startingIntent.setAction(MediaButtonReceiver.NOTIFY_BUTTON_RECEIVER);
         startingIntent.putExtra(Intent.EXTRA_KEY_EVENT, event);
 
-        return PendingIntent.getBroadcast(context, eventCode, startingIntent, 0);
+        return PendingIntent.getBroadcast(context, eventCode, startingIntent,
+                (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
     }
 
     private static String getProgressString(int position, int duration, float speed) {
-        if (position >= 0 && duration > 0) {
-            TimeSpeedConverter converter = new TimeSpeedConverter(speed);
-            position = converter.convert(position);
-            duration = converter.convert(duration);
-            return Converter.getDurationStringLong(position) + " / "
-                    + Converter.getDurationStringLong(duration);
-        } else {
+        if (position < 0 || duration <= 0) {
             return null;
+        }
+        TimeSpeedConverter converter = new TimeSpeedConverter(speed);
+        if (UserPreferences.shouldShowRemainingTime()) {
+            return Converter.getDurationStringLong(converter.convert(position)) + " / -"
+                    + Converter.getDurationStringLong(converter.convert(Math.max(0, duration - position)));
+        } else {
+            return Converter.getDurationStringLong(converter.convert(position)) + " / "
+                    + Converter.getDurationStringLong(converter.convert(duration));
         }
     }
 }
