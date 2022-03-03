@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.danoeh.antennapod.core.storage.mapper.DownloadStatusCursorMapper;
 import de.danoeh.antennapod.model.feed.Chapter;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -451,7 +452,7 @@ public final class DBReader {
         try (Cursor cursor = adapter.getDownloadLogCursor(DOWNLOAD_LOG_SIZE)) {
             List<DownloadStatus> downloadLog = new ArrayList<>(cursor.getCount());
             while (cursor.moveToNext()) {
-                downloadLog.add(DownloadStatus.fromCursor(cursor));
+                downloadLog.add(DownloadStatusCursorMapper.convert(cursor));
             }
             Collections.sort(downloadLog, new DownloadStatusComparator());
             return downloadLog;
@@ -475,7 +476,7 @@ public final class DBReader {
         try (Cursor cursor = adapter.getDownloadLog(Feed.FEEDFILETYPE_FEED, feedId)) {
             List<DownloadStatus> downloadLog = new ArrayList<>(cursor.getCount());
             while (cursor.moveToNext()) {
-                downloadLog.add(DownloadStatus.fromCursor(cursor));
+                downloadLog.add(DownloadStatusCursorMapper.convert(cursor));
             }
             Collections.sort(downloadLog, new DownloadStatusComparator());
             return downloadLog;
@@ -769,6 +770,33 @@ public final class DBReader {
         } finally {
             adapter.close();
         }
+    }
+
+    public static class MonthlyStatisticsItem {
+        public int year = 0;
+        public int month = 0;
+        public long timePlayed = 0;
+    }
+
+    @NonNull
+    public static List<MonthlyStatisticsItem> getMonthlyTimeStatistics() {
+        List<MonthlyStatisticsItem> months = new ArrayList<>();
+        PodDBAdapter adapter = PodDBAdapter.getInstance();
+        adapter.open();
+        try (Cursor cursor = adapter.getMonthlyStatisticsCursor()) {
+            int indexMonth = cursor.getColumnIndexOrThrow("month");
+            int indexYear = cursor.getColumnIndexOrThrow("year");
+            int indexTotalDuration = cursor.getColumnIndexOrThrow("total_duration");
+            while (cursor.moveToNext()) {
+                MonthlyStatisticsItem item = new MonthlyStatisticsItem();
+                item.month = Integer.parseInt(cursor.getString(indexMonth));
+                item.year = Integer.parseInt(cursor.getString(indexYear));
+                item.timePlayed = cursor.getLong(indexTotalDuration);
+                months.add(item);
+            }
+        }
+        adapter.close();
+        return months;
     }
 
     public static class StatisticsResult {

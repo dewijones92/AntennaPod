@@ -87,7 +87,6 @@ public class UserPreferences {
     private static final String PREF_PLAYBACK_SPEED_ARRAY = "prefPlaybackSpeedArray";
     public static final String PREF_PAUSE_PLAYBACK_FOR_FOCUS_LOSS = "prefPauseForFocusLoss";
     private static final String PREF_RESUME_AFTER_CALL = "prefResumeAfterCall";
-    public static final String PREF_VIDEO_BEHAVIOR = "prefVideoBehavior";
     private static final String PREF_TIME_RESPECTS_SPEED = "prefPlaybackTimeRespectsSpeed";
     public static final String PREF_STREAM_OVER_DOWNLOAD = "prefStreamOverDownload";
 
@@ -126,12 +125,9 @@ public class UserPreferences {
     private static final String PREF_FAST_FORWARD_SECS = "prefFastForwardSecs";
     private static final String PREF_REWIND_SECS = "prefRewindSecs";
     private static final String PREF_QUEUE_LOCKED = "prefQueueLocked";
-    private static final String PREF_LEFT_VOLUME = "prefLeftVolume";
-    private static final String PREF_RIGHT_VOLUME = "prefRightVolume";
 
     // Experimental
     private static final String PREF_STEREO_TO_MONO = "PrefStereoToMono";
-    public static final String PREF_CAST_ENABLED = "prefCast"; //Used for enabling Chromecast support
     public static final int EPISODE_CLEANUP_QUEUE = -1;
     public static final int EPISODE_CLEANUP_NULL = -2;
     public static final int EPISODE_CLEANUP_EXCEPT_FAVORITE = -3;
@@ -828,10 +824,6 @@ public class UserPreferences {
         return getMediaPlayer().equals(PREF_MEDIA_PLAYER_EXOPLAYER);
     }
 
-    public static void enableSonic() {
-        prefs.edit().putString(PREF_MEDIA_PLAYER, "sonic").apply();
-    }
-
     public static void enableExoplayer() {
         prefs.edit().putString(PREF_MEDIA_PLAYER, PREF_MEDIA_PLAYER_EXOPLAYER).apply();
     }
@@ -844,15 +836,6 @@ public class UserPreferences {
         prefs.edit()
                 .putBoolean(PREF_STEREO_TO_MONO, enable)
                 .apply();
-    }
-
-    public static VideoBackgroundBehavior getVideoBackgroundBehavior() {
-        switch (prefs.getString(PREF_VIDEO_BEHAVIOR, "pip")) {
-            case "stop": return VideoBackgroundBehavior.STOP;
-            case "continue": return VideoBackgroundBehavior.CONTINUE_PLAYING;
-            case "pip": //Deliberate fall-through
-            default: return VideoBackgroundBehavior.PICTURE_IN_PICTURE;
-        }
     }
 
     public static EpisodeCleanupAlgorithm getEpisodeCleanupAlgorithm() {
@@ -966,17 +949,6 @@ public class UserPreferences {
         return getUpdateTimeOfDay().length == 2;
     }
 
-    /**
-     * Evaluates whether Cast support (Chromecast, Audio Cast, etc) is enabled on the preferences.
-     */
-    public static boolean isCastEnabled() {
-        return prefs.getBoolean(PREF_CAST_ENABLED, false);
-    }
-
-    public enum VideoBackgroundBehavior {
-        STOP, PICTURE_IN_PICTURE, CONTINUE_PLAYING
-    }
-
     public enum BackButtonBehavior {
         DEFAULT, OPEN_DRAWER, DOUBLE_TAP, SHOW_PROMPT, GO_TO_PAGE
     }
@@ -1073,9 +1045,4 @@ public class UserPreferences {
     public static boolean shouldShowSubscriptionTitle() {
         return prefs.getBoolean(PREF_SUBSCRIPTION_TITLE, false);
     }
-
-    public static void setSubscriptionTitleSetting(boolean showTitle) {
-        prefs.edit().putBoolean(PREF_SUBSCRIPTION_TITLE, showTitle).apply();
-    }
-
 }

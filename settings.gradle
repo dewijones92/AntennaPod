@@ -15,4 +15,6 @@ include ':playback:cast'
 
 include ':ui:app-start-intent'
 include ':ui:common'
+include ':ui:i18n'
 include ':ui:png-icons'
+include ':ui:statistics'
