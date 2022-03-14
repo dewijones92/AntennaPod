@@ -4,11 +4,13 @@ import android.content.Context;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,20 +24,26 @@ import java.util.Set;
 import java.util.UUID;
 
 import de.danoeh.antennapod.core.R;
-import de.danoeh.antennapod.core.service.download.DownloadStatus;
+import de.danoeh.antennapod.model.download.DownloadStatus;
 import de.danoeh.antennapod.core.storage.DBReader;
 import de.danoeh.antennapod.core.storage.DBTasks;
 import de.danoeh.antennapod.core.storage.DBWriter;
 import de.danoeh.antennapod.parser.feed.util.DateUtils;
-import de.danoeh.antennapod.core.util.DownloadError;
+import de.danoeh.antennapod.model.download.DownloadError;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.playback.MediaType;
 import de.danoeh.antennapod.parser.feed.util.MimeTypeUtils;
+import de.danoeh.antennapod.parser.media.id3.ID3ReaderException;
+import de.danoeh.antennapod.parser.media.id3.Id3MetadataReader;
+import de.danoeh.antennapod.parser.media.vorbis.VorbisCommentMetadataReader;
+import de.danoeh.antennapod.parser.media.vorbis.VorbisCommentReaderException;
+import org.apache.commons.io.input.CountingInputStream;
 
 public class LocalFeedUpdater {
+    private static final String TAG = "LocalFeedUpdater";
 
     static final String[] PREFERRED_FEED_IMAGE_FILENAMES = { "folder.jpg", "Folder.jpg", "folder.png", "Folder.png" };
 
@@ -197,6 +205,22 @@ public class LocalFeedUpdater {
         item.getMedia().setDuration((int) Long.parseLong(durationStr));
 
         item.getMedia().setHasEmbeddedPicture(mediaMetadataRetriever.getEmbeddedPicture() != null);
+
+        try (InputStream inputStream = context.getContentResolver().openInputStream(file.getUri())) {
+            Id3MetadataReader reader = new Id3MetadataReader(new CountingInputStream(inputStream));
+            reader.readInputStream();
+            item.setDescriptionIfLonger(reader.getComment());
+        } catch (IOException | ID3ReaderException e) {
+            Log.d(TAG, "Unable to parse ID3 of " + file.getUri() + ": " + e.getMessage());
+
+            try (InputStream inputStream = context.getContentResolver().openInputStream(file.getUri())) {
+                VorbisCommentMetadataReader reader = new VorbisCommentMetadataReader(inputStream);
+                reader.readInputStream();
+                item.setDescriptionIfLonger(reader.getDescription());
+            } catch (IOException | VorbisCommentReaderException e2) {
+                Log.d(TAG, "Unable to parse vorbis comments of " + file.getUri() + ": " + e2.getMessage());
+            }
+        }
     }
 
     private static void reportError(Feed feed, String reasonDetailed) {

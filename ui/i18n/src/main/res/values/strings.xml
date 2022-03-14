@@ -49,7 +49,7 @@
     <string name="statistics_to">To</string>
     <string name="statistics_today">Today</string>
     <string name="statistics_filter_all_time">All time</string>
-    <string name="statistics_filter_last_year">Last year</string>
+    <string name="statistics_filter_past_year">Past year</string>
     <string name="statistics_reset_data">Reset statistics data</string>
     <string name="statistics_reset_data_msg">This will erase the history of duration played for all episodes. Are you sure you want to proceed?</string>
     <string name="statistics_counting_range">Played between %1$s and %2$s</string>
@@ -578,7 +578,7 @@
     <string name="opml_import_summary">Import your subscriptions from another podcast app</string>
     <string name="database_export_summary">Transfer subscriptions, listened episodes and queue to AntennaPod on another device</string>
     <string name="database_import_summary">Import AntennaPod database from another device</string>
-    <string name="opml_import_label">OPML Import</string>
+    <string name="opml_import_label">OPML import</string>
     <string name="opml_add_podcast_label">Import podcast list (OPML)</string>
     <string name="opml_reader_error">An error has occurred while reading the OPML document:</string>
     <string name="opml_import_error_no_file">No file selected!</string>

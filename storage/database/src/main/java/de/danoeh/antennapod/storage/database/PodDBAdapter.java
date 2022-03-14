@@ -1,4 +1,4 @@
-package de.danoeh.antennapod.core.storage;
+package de.danoeh.antennapod.storage.database;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -17,9 +17,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import de.danoeh.antennapod.model.feed.FeedCounter;
 import de.danoeh.antennapod.model.feed.FeedFunding;
-import de.danoeh.antennapod.core.storage.mapper.FeedItemFilterQuery;
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,10 +35,10 @@ import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
-import de.danoeh.antennapod.core.preferences.UserPreferences;
-import de.danoeh.antennapod.core.service.download.DownloadStatus;
-import de.danoeh.antennapod.core.util.LongIntMap;
+import de.danoeh.antennapod.model.download.DownloadStatus;
 import de.danoeh.antennapod.model.feed.SortOrder;
+import de.danoeh.antennapod.storage.database.mapper.FeedItemFilterQuery;
+import org.apache.commons.io.FileUtils;
 
 import static de.danoeh.antennapod.model.feed.FeedPreferences.SPEED_USE_GLOBAL;
 import static de.danoeh.antennapod.model.feed.SortOrder.toCodeString;
@@ -51,7 +50,7 @@ public class PodDBAdapter {
 
     private static final String TAG = "PodDBAdapter";
     public static final String DATABASE_NAME = "Antennapod.db";
-    public static final int VERSION = 2050000;
+    public static final int VERSION = 2060000;
 
     /**
      * Maximum number of arguments for IN-operator.
@@ -93,7 +92,6 @@ public class PodDBAdapter {
     public static final String KEY_FEED_IDENTIFIER = "feed_identifier";
     public static final String KEY_REASON_DETAILED = "reason_detailed";
     public static final String KEY_DOWNLOADSTATUS_TITLE = "title";
-    public static final String KEY_CHAPTER_TYPE = "type";
     public static final String KEY_PLAYBACK_COMPLETION_DATE = "playback_completion_date";
     public static final String KEY_AUTO_DOWNLOAD_ATTEMPTS = "auto_download";
     public static final String KEY_AUTO_DOWNLOAD_ENABLED = "auto_download"; // Both tables use the same key
@@ -118,6 +116,7 @@ public class PodDBAdapter {
     public static final String KEY_FEED_SKIP_ENDING = "feed_skip_ending";
     public static final String KEY_FEED_TAGS = "tags";
     public static final String KEY_EPISODE_NOTIFICATION = "episode_notification";
+    public static final String KEY_PODCASTINDEX_CHAPTER_URL = "podcastindex_chapter_url";
 
     // Table names
     public static final String TABLE_NAME_FEEDS = "Feeds";
@@ -168,7 +167,8 @@ public class PodDBAdapter {
             + KEY_MEDIA + " INTEGER," + KEY_FEED + " INTEGER,"
             + KEY_HAS_CHAPTERS + " INTEGER," + KEY_ITEM_IDENTIFIER + " TEXT,"
             + KEY_IMAGE_URL + " TEXT,"
-            + KEY_AUTO_DOWNLOAD_ATTEMPTS + " INTEGER)";
+            + KEY_AUTO_DOWNLOAD_ATTEMPTS + " INTEGER,"
+            + KEY_PODCASTINDEX_CHAPTER_URL + " TEXT)";
 
     private static final String CREATE_TABLE_FEED_MEDIA = "CREATE TABLE "
             + TABLE_NAME_FEED_MEDIA + " (" + TABLE_PRIMARY_KEY + KEY_DURATION
@@ -195,7 +195,7 @@ public class PodDBAdapter {
     private static final String CREATE_TABLE_SIMPLECHAPTERS = "CREATE TABLE "
             + TABLE_NAME_SIMPLECHAPTERS + " (" + TABLE_PRIMARY_KEY + KEY_TITLE
             + " TEXT," + KEY_START + " INTEGER," + KEY_FEEDITEM + " INTEGER,"
-            + KEY_LINK + " TEXT," + KEY_IMAGE_URL + " TEXT," + KEY_CHAPTER_TYPE + " INTEGER)";
+            + KEY_LINK + " TEXT," + KEY_IMAGE_URL + " TEXT)";
 
     // SQL Statements for creating indexes
     static final String CREATE_INDEX_FEEDITEMS_FEED = "CREATE INDEX "
@@ -294,7 +294,8 @@ public class PodDBAdapter {
             + TABLE_NAME_FEED_ITEMS + "." + KEY_HAS_CHAPTERS + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_ITEM_IDENTIFIER + ", "
             + TABLE_NAME_FEED_ITEMS + "." + KEY_IMAGE_URL + ", "
-            + TABLE_NAME_FEED_ITEMS + "." + KEY_AUTO_DOWNLOAD_ATTEMPTS;
+            + TABLE_NAME_FEED_ITEMS + "." + KEY_AUTO_DOWNLOAD_ATTEMPTS + ", "
+            + TABLE_NAME_FEED_ITEMS + "." + KEY_PODCASTINDEX_CHAPTER_URL;
 
     private static final String KEYS_FEED_MEDIA =
             TABLE_NAME_FEED_MEDIA + "." + KEY_ID + " AS " + SELECT_KEY_MEDIA_ID + ", "
@@ -650,6 +651,7 @@ public class PodDBAdapter {
         values.put(KEY_ITEM_IDENTIFIER, item.getItemIdentifier());
         values.put(KEY_AUTO_DOWNLOAD_ATTEMPTS, item.getAutoDownloadAttemptsAndTime());
         values.put(KEY_IMAGE_URL, item.getImageUrl());
+        values.put(KEY_PODCASTINDEX_CHAPTER_URL, item.getPodcastIndexChapterUrl());
 
         if (item.getId() == 0) {
             item.setId(db.insert(TABLE_NAME_FEED_ITEMS, null, values));
@@ -720,7 +722,6 @@ public class PodDBAdapter {
             values.put(KEY_FEEDITEM, item.getId());
             values.put(KEY_LINK, chapter.getLink());
             values.put(KEY_IMAGE_URL, chapter.getImageUrl());
-            values.put(KEY_CHAPTER_TYPE, chapter.getChapterType());
             if (chapter.getId() == 0) {
                 chapter.setId(db.insert(TABLE_NAME_SIMPLECHAPTERS, null, values));
             } else {
@@ -737,7 +738,7 @@ public class PodDBAdapter {
         db.execSQL(sql);
     }
 
-    void setFeedCustomTitle(long feedId, String customTitle) {
+    public void setFeedCustomTitle(long feedId, String customTitle) {
         ContentValues values = new ContentValues();
         values.put(KEY_CUSTOM_TITLE, customTitle);
         db.update(TABLE_NAME_FEEDS, values, KEY_ID + "=?", new String[]{String.valueOf(feedId)});
@@ -1174,29 +1175,23 @@ public class PodDBAdapter {
         return result;
     }
 
-    public final LongIntMap getFeedCounters(long... feedIds) {
-        int setting = UserPreferences.getFeedCounterSetting();
-
-        return getFeedCounters(setting, feedIds);
-    }
-
-    public final LongIntMap getFeedCounters(int setting, long... feedIds) {
+    public final LongIntMap getFeedCounters(FeedCounter setting, long... feedIds) {
         String whereRead;
         switch (setting) {
-            case UserPreferences.FEED_COUNTER_SHOW_NEW_UNPLAYED_SUM:
+            case SHOW_NEW_UNPLAYED_SUM:
                 whereRead = "(" + KEY_READ + "=" + FeedItem.NEW +
                         " OR " + KEY_READ + "=" + FeedItem.UNPLAYED + ")";
                 break;
-            case UserPreferences.FEED_COUNTER_SHOW_NEW:
+            case SHOW_NEW:
                 whereRead = KEY_READ + "=" + FeedItem.NEW;
                 break;
-            case UserPreferences.FEED_COUNTER_SHOW_UNPLAYED:
+            case SHOW_UNPLAYED:
                 whereRead = KEY_READ + "=" + FeedItem.UNPLAYED;
                 break;
-            case UserPreferences.FEED_COUNTER_SHOW_DOWNLOADED:
+            case SHOW_DOWNLOADED:
                 whereRead = KEY_DOWNLOADED + "=1";
                 break;
-            case UserPreferences.FEED_COUNTER_SHOW_NONE:
+            case SHOW_NONE:
                 // deliberate fall-through
             default: // NONE
                 return new LongIntMap(0);
