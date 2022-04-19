@@ -339,6 +339,9 @@ public class DownloadService extends Service {
                     // Was stored in the database before and not initiated manually
                     newEpisodesNotification.showIfNeeded(DownloadService.this, task.getSavedFeed());
                 }
+                if (downloader.permanentRedirectUrl != null) {
+                    DBWriter.updateFeedDownloadURL(request.getSource(), downloader.permanentRedirectUrl);
+                }
             } else {
                 DBWriter.setFeedLastUpdateFailed(request.getFeedfileId(), true);
                 saveDownloadStatus(task.getDownloadStatus());
@@ -505,7 +508,7 @@ public class DownloadService extends Service {
         for (Feed feed : feeds) {
             if (feed.getPreferences().getKeepUpdated()) {
                 DownloadRequest.Builder builder = DownloadRequestCreator.create(feed);
-                builder.setInitiatedByUser(initiatedByUser);
+                builder.withInitiatedByUser(initiatedByUser);
                 addNewRequest(builder.build());
             }
         }
@@ -551,7 +554,7 @@ public class DownloadService extends Service {
      *
      * @param status the download that is going to be saved
      */
-    private void saveDownloadStatus(DownloadStatus status) {
+    private void saveDownloadStatus(@NonNull DownloadStatus status) {
         reportQueue.add(status);
         DBWriter.addDownloadStatus(status);
     }
@@ -661,7 +664,6 @@ public class DownloadService extends Service {
         if (notificationUpdater != null) {
             notificationUpdater.run();
         }
-        downloadEnqueueExecutor.shutdown(); // Do not accept new downloads
         cancelNotificationUpdater();
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
         stopSelf();
