@@ -124,7 +124,7 @@ public class FeedInfoFragment extends Fragment implements Toolbar.OnMenuItemClic
             protected void doTint(Context themedContext) {
                 toolbar.getMenu().findItem(R.id.visit_website_item)
                         .setIcon(AppCompatResources.getDrawable(themedContext, R.drawable.ic_web));
-                toolbar.getMenu().findItem(R.id.share_parent)
+                toolbar.getMenu().findItem(R.id.share_item)
                         .setIcon(AppCompatResources.getDrawable(themedContext, R.drawable.ic_share));
             }
         };
@@ -139,6 +139,7 @@ public class FeedInfoFragment extends Fragment implements Toolbar.OnMenuItemClic
         infoContainer = root.findViewById(R.id.infoContainer);
         root.findViewById(R.id.butShowInfo).setVisibility(View.INVISIBLE);
         root.findViewById(R.id.butShowSettings).setVisibility(View.INVISIBLE);
+        root.findViewById(R.id.butFilter).setVisibility(View.INVISIBLE);
         // https://github.com/bumptech/glide/issues/529
         imgvBackground.setColorFilter(new LightingColorFilter(0xff828282, 0x000000));
 
@@ -261,13 +262,8 @@ public class FeedInfoFragment extends Fragment implements Toolbar.OnMenuItemClic
     }
 
     private void refreshToolbarState() {
-        boolean shareLinkVisible = feed != null && feed.getLink() != null;
-        boolean downloadUrlVisible = feed != null && !feed.isLocalFeed();
-
         toolbar.getMenu().findItem(R.id.reconnect_local_folder).setVisible(feed != null && feed.isLocalFeed());
-        toolbar.getMenu().findItem(R.id.share_download_url_item).setVisible(downloadUrlVisible);
-        toolbar.getMenu().findItem(R.id.share_link_item).setVisible(shareLinkVisible);
-        toolbar.getMenu().findItem(R.id.share_parent).setVisible(downloadUrlVisible || shareLinkVisible);
+        toolbar.getMenu().findItem(R.id.share_item).setVisible(feed != null && !feed.isLocalFeed());
         toolbar.getMenu().findItem(R.id.visit_website_item).setVisible(feed != null && feed.getLink() != null
                 && IntentUtils.isCallable(getContext(), new Intent(Intent.ACTION_VIEW, Uri.parse(feed.getLink()))));
     }
