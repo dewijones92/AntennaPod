@@ -1052,6 +1052,14 @@ public class PodDBAdapter {
         return db.rawQuery(query, null);
     }
 
+    public final Cursor getTotalEpisodeCountCursor(FeedItemFilter filter) {
+        String filterQuery = FeedItemFilterQuery.generateFrom(filter);
+        String whereClause = "".equals(filterQuery) ? "" : " WHERE " + filterQuery;
+        final String query = "SELECT count(" + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + ") FROM " + TABLE_NAME_FEED_ITEMS
+                + JOIN_FEED_ITEM_AND_MEDIA + whereClause;
+        return db.rawQuery(query, null);
+    }
+
     public Cursor getDownloadedItemsCursor() {
         final String query = SELECT_FEED_ITEMS_AND_MEDIA
                 + "WHERE " + TABLE_NAME_FEED_MEDIA + "." + KEY_DOWNLOADED + " > 0";
@@ -1103,6 +1111,15 @@ public class PodDBAdapter {
         }
         final String query = SELECT_FEED_ITEMS_AND_MEDIA
                 + " WHERE " + SELECT_KEY_ITEM_ID + " IN (" + TextUtils.join(",", ids) + ")";
+        return db.rawQuery(query, null);
+    }
+
+    public final Cursor getFeedItemCursorByMediaIds(final Long[] ids) {
+        if (ids.length > IN_OPERATOR_MAXIMUM) {
+            throw new IllegalArgumentException("number of IDs must not be larger than " + IN_OPERATOR_MAXIMUM);
+        }
+        final String query = SELECT_FEED_ITEMS_AND_MEDIA
+                + " WHERE " + SELECT_KEY_MEDIA_ID + " IN (" + TextUtils.join(",", ids) + ")";
         return db.rawQuery(query, null);
     }
 
@@ -1175,7 +1192,7 @@ public class PodDBAdapter {
         return result;
     }
 
-    public final LongIntMap getFeedCounters(FeedCounter setting, long... feedIds) {
+    public final Map<Long, Integer> getFeedCounters(FeedCounter setting, long... feedIds) {
         String whereRead;
         switch (setting) {
             case SHOW_NEW_UNPLAYED_SUM:
@@ -1194,12 +1211,12 @@ public class PodDBAdapter {
             case SHOW_NONE:
                 // deliberate fall-through
             default: // NONE
-                return new LongIntMap(0);
+                return new HashMap<>();
         }
         return conditionalFeedCounterRead(whereRead, feedIds);
     }
 
-    private LongIntMap conditionalFeedCounterRead(String whereRead, long... feedIds) {
+    private Map<Long, Integer> conditionalFeedCounterRead(String whereRead, long... feedIds) {
         String limitFeeds = "";
         if (feedIds.length > 0) {
             // work around TextUtils.join wanting only boxed items
@@ -1222,7 +1239,7 @@ public class PodDBAdapter {
                 + whereRead + " GROUP BY " + KEY_FEED;
 
         Cursor c = db.rawQuery(query, null);
-        LongIntMap result = new LongIntMap(c.getCount());
+        Map<Long, Integer> result = new HashMap<>();
         if (c.moveToFirst()) {
             do {
                 long feedId = c.getLong(0);
@@ -1234,7 +1251,7 @@ public class PodDBAdapter {
         return result;
     }
 
-    public final LongIntMap getPlayedEpisodesCounters(long... feedIds) {
+    public final Map<Long, Integer> getPlayedEpisodesCounters(long... feedIds) {
         String whereRead = KEY_READ + "=" + FeedItem.PLAYED;
         return conditionalFeedCounterRead(whereRead, feedIds);
     }

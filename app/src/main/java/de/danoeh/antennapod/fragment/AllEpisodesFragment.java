@@ -58,6 +58,7 @@ public class AllEpisodesFragment extends EpisodesListFragment {
         feedItemFilter = new FeedItemFilter(event.filterValues.toArray(new String[0]));
         SharedPreferences prefs = getActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(PREF_FILTER, StringUtils.join(event.filterValues, ",")).apply();
+        page = 1;
         loadItems();
     }
 
@@ -65,8 +66,6 @@ public class AllEpisodesFragment extends EpisodesListFragment {
     public void onPrepareOptionsMenu(@NonNull Menu menu) {
         super.onPrepareOptionsMenu(menu);
         menu.findItem(R.id.filter_items).setVisible(true);
-        menu.findItem(R.id.mark_all_read_item).setVisible(true);
-        menu.findItem(R.id.remove_all_new_flags_item).setVisible(false);
     }
 
     @Override
@@ -102,7 +101,12 @@ public class AllEpisodesFragment extends EpisodesListFragment {
 
     @NonNull
     @Override
-    protected List<FeedItem> loadMoreData() {
+    protected List<FeedItem> loadMoreData(int page) {
         return DBReader.getRecentlyPublishedEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE, feedItemFilter);
+    }
+
+    @Override
+    protected int loadTotalItemCount() {
+        return DBReader.getTotalEpisodeCount(feedItemFilter);
     }
 }

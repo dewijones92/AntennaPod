@@ -37,6 +37,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.snackbar.Snackbar;
 
+import de.danoeh.antennapod.fragment.CompletedDownloadsFragment;
 import de.danoeh.antennapod.playback.cast.CastEnabledActivity;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
@@ -54,8 +55,8 @@ import de.danoeh.antennapod.core.util.download.AutoUpdateManager;
 import de.danoeh.antennapod.dialog.RatingDialog;
 import de.danoeh.antennapod.fragment.AddFeedFragment;
 import de.danoeh.antennapod.fragment.AudioPlayerFragment;
-import de.danoeh.antennapod.fragment.DownloadsFragment;
 import de.danoeh.antennapod.fragment.EpisodesFragment;
+import de.danoeh.antennapod.fragment.InboxFragment;
 import de.danoeh.antennapod.fragment.FeedItemlistFragment;
 import de.danoeh.antennapod.fragment.NavDrawerFragment;
 import de.danoeh.antennapod.fragment.PlaybackHistoryFragment;
@@ -231,6 +232,7 @@ public class MainActivity extends CastEnabledActivity {
 
             // for backward compatibility, we only change defaults for fresh installs
             UserPreferences.setUpdateInterval(12);
+            AutoUpdateManager.restartUpdateAlarm(this);
 
             SharedPreferences.Editor edit = prefs.edit();
             edit.putBoolean(PREF_IS_FIRST_LAUNCH, false);
@@ -266,11 +268,14 @@ public class MainActivity extends CastEnabledActivity {
             case QueueFragment.TAG:
                 fragment = new QueueFragment();
                 break;
+            case InboxFragment.TAG:
+                fragment = new InboxFragment();
+                break;
             case EpisodesFragment.TAG:
                 fragment = new EpisodesFragment();
                 break;
-            case DownloadsFragment.TAG:
-                fragment = new DownloadsFragment();
+            case CompletedDownloadsFragment.TAG:
+                fragment = new CompletedDownloadsFragment();
                 break;
             case PlaybackHistoryFragment.TAG:
                 fragment = new PlaybackHistoryFragment();
@@ -589,7 +594,7 @@ public class MainActivity extends CastEnabledActivity {
                 }
                 switch (feature) {
                     case "DOWNLOADS":
-                        loadFragment(DownloadsFragment.TAG, null);
+                        loadFragment(CompletedDownloadsFragment.TAG, null);
                         break;
                     case "HISTORY":
                         loadFragment(PlaybackHistoryFragment.TAG, null);
