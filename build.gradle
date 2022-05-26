@@ -51,8 +51,8 @@ project.ext {
     // Third-party
     commonslangVersion = "3.6"
     commonsioVersion = "2.5"
-    jsoupVersion = "1.11.2"
     glideVersion = "4.11.0"
+    jsoupVersion = "1.15.1"
     okhttpVersion = "3.12.10"
     okioVersion = "1.17.5"
     eventbusVersion = "3.2.0"
@@ -62,12 +62,8 @@ project.ext {
     exoPlayerVersion = "2.14.2"
     audioPlayerVersion = "v2.0.0"
 
-    // Only used for free builds. This version should be updated regularly.
-    conscryptVersion = "2.5.2"
-
     // Google Play build
     wearableSupportVersion = "2.6.0"
-    playServicesVersion = "8.4.0"
 
     //Tests
     awaitilityVersion = "3.1.6"
