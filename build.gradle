@@ -53,6 +53,7 @@ project.ext {
     commonsioVersion = "2.5"
     glideVersion = "4.11.0"
     jsoupVersion = "1.15.1"
+    glideVersion = "4.13.2"
     okhttpVersion = "3.12.10"
     okioVersion = "1.17.5"
     eventbusVersion = "3.2.0"
