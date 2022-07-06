@@ -10,8 +10,8 @@ android {
         // Version code schema:
         // "1.2.3-beta4"    -> 1020304
         // "1.2.3"          -> 1020395
-        versionCode 2050296
-        versionName "2.5.2"
+        versionCode 2060195
+        versionName "2.6.1"
 
         def commit = ""
         try {
@@ -123,7 +123,6 @@ dependencies {
 
     implementation "com.joanzapata.iconify:android-iconify-fontawesome:$iconifyVersion"
     implementation "com.joanzapata.iconify:android-iconify-material:$iconifyVersion"
-    implementation 'com.github.shts:TriangleLabelView:1.1.2'
     implementation 'com.leinardi.android:speed-dial:3.2.0'
     implementation "com.github.AntennaPod:AntennaPod-AudioPlayer:$audioPlayerVersion"
     implementation 'com.github.ByteHamster:SearchPreference:v2.0.0'
