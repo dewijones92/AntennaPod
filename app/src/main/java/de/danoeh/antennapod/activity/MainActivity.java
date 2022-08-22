@@ -37,6 +37,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.snackbar.Snackbar;
 
+import de.danoeh.antennapod.fragment.AllEpisodesFragment;
 import de.danoeh.antennapod.fragment.CompletedDownloadsFragment;
 import de.danoeh.antennapod.playback.cast.CastEnabledActivity;
 import org.apache.commons.lang3.ArrayUtils;
@@ -50,12 +51,10 @@ import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.core.preferences.UserPreferences;
 import de.danoeh.antennapod.core.receiver.MediaButtonReceiver;
 import de.danoeh.antennapod.core.service.playback.PlaybackService;
-import de.danoeh.antennapod.core.util.StorageUtils;
 import de.danoeh.antennapod.core.util.download.AutoUpdateManager;
 import de.danoeh.antennapod.dialog.RatingDialog;
 import de.danoeh.antennapod.fragment.AddFeedFragment;
 import de.danoeh.antennapod.fragment.AudioPlayerFragment;
-import de.danoeh.antennapod.fragment.EpisodesFragment;
 import de.danoeh.antennapod.fragment.InboxFragment;
 import de.danoeh.antennapod.fragment.FeedItemlistFragment;
 import de.danoeh.antennapod.fragment.NavDrawerFragment;
@@ -112,7 +111,6 @@ public class MainActivity extends CastEnabledActivity {
             ensureGeneratedViewIdGreaterThan(savedInstanceState.getInt(KEY_GENERATED_VIEW_ID, 0));
         }
         super.onCreate(savedInstanceState);
-        StorageUtils.checkStorageAvailability(this);
         setContentView(R.layout.main);
         recycledViewPool.setMaxRecycledViews(R.id.view_type_episode_item, 25);
 
@@ -272,8 +270,8 @@ public class MainActivity extends CastEnabledActivity {
             case InboxFragment.TAG:
                 fragment = new InboxFragment();
                 break;
-            case EpisodesFragment.TAG:
-                fragment = new EpisodesFragment();
+            case AllEpisodesFragment.TAG:
+                fragment = new AllEpisodesFragment();
                 break;
             case CompletedDownloadsFragment.TAG:
                 fragment = new CompletedDownloadsFragment();
@@ -414,7 +412,6 @@ public class MainActivity extends CastEnabledActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        StorageUtils.checkStorageAvailability(this);
         handleNavIntent();
         RatingDialog.check();
 
@@ -609,7 +606,7 @@ public class MainActivity extends CastEnabledActivity {
                         loadFragment(PlaybackHistoryFragment.TAG, null);
                         break;
                     case "EPISODES":
-                        loadFragment(EpisodesFragment.TAG, null);
+                        loadFragment(AllEpisodesFragment.TAG, null);
                         break;
                     case "QUEUE":
                         loadFragment(QueueFragment.TAG, null);
