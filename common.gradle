@@ -1,16 +1,19 @@
 android {
-    compileSdk 31
+    compileSdk 36
 
     defaultConfig {
-        minSdk 19
-        targetSdk 30
+        minSdk 23
+        targetSdk 36
 
-        multiDexEnabled true
         vectorDrawables.useSupportLibrary true
         vectorDrawables.generatedDensities = []
 
         testApplicationId "de.danoeh.antennapod.core.tests"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        resourceConfigurations += ["en", "ar", "br", "ca", "cs", "da", "de", "el", "es", "et", "eu", "fa", "fi", "fr", "gl", "hi", "hu", "in", "it", "iw", "ja", "ko", "lt", "nb", "nl", "pl", "pt", "pt-rBR", "ro", "ru", "sc", "sk", "sl", "sr", "sv", "tr", "uk", "zh-rCN", "zh-rTW"]
+
+        buildConfigField "boolean", "USE_MEDIA3_PLAYBACK_SERVICE", "true"
+        manifestPlaceholders = [oldServiceEnabled: "false", newServiceEnabled: "true"]
     }
 
     buildTypes {
@@ -24,16 +27,24 @@ android {
     }
 
     packagingOptions {
-        exclude "META-INF/LICENSE.txt"
-        exclude "META-INF/NOTICE.txt"
-        // Extraneous jsoup files
-        exclude "META-INF/CHANGES"
-        exclude "META-INF/README.md"
+        resources {
+            excludes += ["META-INF/LICENSE.txt",
+                         "META-INF/NOTICE.txt",
+                         "META-INF/CHANGES",
+                         "META-INF/README.md"]
+        }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs.addAll([
+            "-Xlint:all,-deprecation,-serial,-this-escape,-unchecked,-processing,-classfile",
+            "-Werror",
+        ])
     }
 
     testOptions {
@@ -43,8 +54,8 @@ android {
         }
     }
 
-    lintOptions {
-        disable "GradleDependency"
+    lint {
+        disable "GradleDependency", "OutdatedLibrary", "AndroidGradlePluginVersion", "CheckResult"
         checkDependencies true
         warningsAsErrors true
         abortOnError true
@@ -53,10 +64,17 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
-tasks.withType(Test) {
+dependencies {
+    // align all versions of kotlin transitive dependencies, see
+    // https://youtrack.jetbrains.com/issue/KT-55297/kotlin-stdlib-should-declare-constraints-on-kotlin-stdlib-jdk8-and-kotlin-stdlib-jdk7
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.9.24")
+}
+
+tasks.withType(Test).configureEach {
     testLogging {
         exceptionFormat "full"
         events "skipped", "passed", "failed"
@@ -65,40 +83,69 @@ tasks.withType(Test) {
     }
 }
 
-gradle.projectsEvaluated {
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << "-Xlint"
-    }
-}
-
 apply plugin: 'com.github.spotbugs'
 
 spotbugs {
+    toolVersion = '4.8.6'
     effort = 'max'
     reportLevel = 'medium'
     excludeFilter = rootProject.file('config/spotbugs/exclude.xml')
     ignoreFailures = true // Handled by printing task
 }
 
-gradle.taskGraph.beforeTask { task ->
-    if (task.name.toLowerCase().contains('spotbugs')) {
-        task.doLast {
-            def reportFile = task.project.file("build/reports/spotbugs/playDebug.xml")
-            if (!reportFile.exists()) return
-            def slurped = new groovy.xml.XmlSlurper().parse(reportFile)
+gradle.taskGraph.whenReady { taskGraph ->
+    taskGraph.allTasks.each { task ->
+        if (task.name.toLowerCase().contains('spotbugs')) {
+            task.doLast {
+                def reportFile = task.project.file("build/reports/spotbugs/debug.xml")
+                def reportFilePlay = task.project.file("build/reports/spotbugs/playDebug.xml")
 
-            def foundErrors = false
-            slurped['BugInstance'].each { bug ->
-                logger.error "[SpotBugs] ${bug['LongMessage']} [${bug.@'type'}]"
-                bug['SourceLine'].each { line ->
-                    logger.error "[SpotBugs]     ${line['Message']}"
-                    foundErrors = true
+                if (reportFile.exists()) {
+                    parseSpotBugsXml(task, reportFile)
                 }
-            }
-            if (foundErrors) {
-                throw new TaskExecutionException(task,
-                        new Exception("SpotBugs violations were found. See output above for details."))
+                if (reportFilePlay.exists()) {
+                    parseSpotBugsXml(task, reportFilePlay)
+                }
             }
         }
     }
+}
+
+def parseSpotBugsXml(task, xmlFile) {
+    def slurped = new groovy.xml.XmlSlurper().parse(xmlFile)
+
+    def foundErrors = false
+    slurped['BugInstance'].each { bug ->
+        logger.error "[SpotBugs] ${bug['LongMessage']} [${bug.@'type'}]"
+        bug['SourceLine'].each { line ->
+            logger.error "[SpotBugs]     ${line['Message']}"
+            foundErrors = true
+        }
+    }
+    if (foundErrors) {
+        throw new TaskExecutionException(task,
+                new Exception("SpotBugs violations were found. See output above for details."))
+    }
+}
+
+apply plugin: 'checkstyle'
+
+checkstyle {
+    toolVersion = '10.12.0'
+    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    ignoreFailures = false
+    showViolations = true
+}
+
+tasks.register('checkstyle', Checkstyle) {
+    group = "verification"
+
+    classpath = files()
+    source = fileTree('src/main/java') { include '**/*.java' }
+    if (file("src/free/java").exists()) source += fileTree("src/free/java") { include '**/*.java' }
+    if (file("src/play/java").exists()) source += fileTree("src/play/java") { include '**/*.java' }
+
+    exclude '**/gen/**'
+    exclude '**/R.java'
+    exclude '**/BuildConfig.java'
 }

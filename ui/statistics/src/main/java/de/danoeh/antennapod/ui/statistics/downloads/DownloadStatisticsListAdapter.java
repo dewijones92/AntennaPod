@@ -3,20 +3,20 @@ package de.danoeh.antennapod.ui.statistics.downloads;
 import android.content.Context;
 import android.text.format.Formatter;
 import androidx.fragment.app.Fragment;
-import de.danoeh.antennapod.core.storage.StatisticsItem;
+import de.danoeh.antennapod.storage.database.StatisticsItem;
 import de.danoeh.antennapod.ui.statistics.PieChartView;
 import de.danoeh.antennapod.ui.statistics.R;
 import de.danoeh.antennapod.ui.statistics.StatisticsListAdapter;
 import de.danoeh.antennapod.ui.statistics.feed.FeedStatisticsDialogFragment;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Adapter for the download statistics list.
  */
 public class DownloadStatisticsListAdapter extends StatisticsListAdapter {
     private final Fragment fragment;
+    private int cacheEpisodes;
 
     public DownloadStatisticsListAdapter(Context context, Fragment fragment) {
         super(context);
@@ -25,7 +25,8 @@ public class DownloadStatisticsListAdapter extends StatisticsListAdapter {
 
     @Override
     protected String getHeaderCaption() {
-        return context.getString(R.string.total_size_downloaded_podcasts);
+        return context.getResources().getQuantityString(
+                R.plurals.total_size_downloaded_podcasts, cacheEpisodes, cacheEpisodes);
     }
 
     @Override
@@ -36,25 +37,25 @@ public class DownloadStatisticsListAdapter extends StatisticsListAdapter {
     @Override
     protected PieChartView.PieChartData generateChartData(List<StatisticsItem> statisticsData) {
         float[] dataValues = new float[statisticsData.size()];
+        cacheEpisodes = 0;
         for (int i = 0; i < statisticsData.size(); i++) {
             StatisticsItem item = statisticsData.get(i);
             dataValues[i] = item.totalDownloadSize;
+            cacheEpisodes += (int) item.episodesDownloadCount;
         }
         return new PieChartView.PieChartData(dataValues);
     }
 
     @Override
     protected void onBindFeedViewHolder(StatisticsHolder holder, StatisticsItem item) {
-        holder.value.setText(Formatter.formatShortFileSize(context, item.totalDownloadSize)
-                + " • "
-                + String.format(Locale.getDefault(), "%d%s",
-                item.episodesDownloadCount, context.getString(R.string.episodes_suffix)));
+        int numEpisodes = (int) item.episodesDownloadCount;
+        String text = Formatter.formatShortFileSize(context, item.totalDownloadSize);
+        text += " • " + context.getResources().getQuantityString(R.plurals.num_episodes, numEpisodes, numEpisodes);
+        holder.value.setText(text);
 
-        holder.itemView.setOnClickListener(v -> {
-            FeedStatisticsDialogFragment yourDialogFragment = FeedStatisticsDialogFragment.newInstance(
-                    item.feed.getId(), item.feed.getTitle());
-            yourDialogFragment.show(fragment.getChildFragmentManager().beginTransaction(), "DialogFragment");
-        });
+        holder.itemView.setOnClickListener(v ->
+                FeedStatisticsDialogFragment.newInstance(item.feed.getId(), item.feed.getTitle())
+                        .show(fragment.getChildFragmentManager().beginTransaction(), "FeedStatistics"));
     }
 
 }

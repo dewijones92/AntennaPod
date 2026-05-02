@@ -20,13 +20,21 @@ public abstract class CastEnabledActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         canCast = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this) == ConnectionResult.SUCCESS;
         if (canCast) {
-            CastContext.getSharedInstance(this);
+            try {
+                CastContext.getSharedInstance(this);
+            } catch (Exception e) {
+                e.printStackTrace();
+                canCast = false;
+            }
         }
     }
 
     public void requestCastButton(Menu menu) {
         if (!canCast) {
             return;
+        }
+        if (menu.findItem(R.id.media_route_menu_item) != null) {
+            return; // Already added
         }
         getMenuInflater().inflate(R.menu.cast_button, menu);
         CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), menu, R.id.media_route_menu_item);

@@ -1,5 +1,7 @@
 package de.danoeh.antennapod.net.discovery;
 
+import de.danoeh.antennapod.net.common.AntennapodHttpClient;
+import de.danoeh.antennapod.net.common.UserAgentInterceptor;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,12 +17,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import de.danoeh.antennapod.core.ClientConfig;
-import de.danoeh.antennapod.core.service.download.AntennapodHttpClient;
-import io.reactivex.Single;
-import io.reactivex.SingleOnSubscribe;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleOnSubscribe;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -54,10 +54,14 @@ public class PodcastIndexPodcastSearcher implements PodcastSearcher {
 
                     for (int i = 0; i < j.length(); i++) {
                         JSONObject podcastJson = j.getJSONObject(i);
-                        PodcastSearchResult podcast = PodcastSearchResult.fromPodcastIndex(podcastJson);
-                        if (podcast.feedUrl != null) {
-                            podcasts.add(podcast);
+                        if (!podcastJson.has("url")) {
+                            continue;
                         }
+                        String title = podcastJson.optString("title", "Unknown");
+                        String imageUrl = podcastJson.optString("image", "");
+                        String feedUrl = podcastJson.optString("url", "");
+                        String author = podcastJson.optString("author", "Unknown");
+                        podcasts.add(new PodcastSearchResult(title, imageUrl, feedUrl, author));
                     }
                 } else {
                     subscriber.onError(new IOException(response.toString()));
@@ -83,7 +87,7 @@ public class PodcastIndexPodcastSearcher implements PodcastSearcher {
 
     @Override
     public String getName() {
-        return "Podcastindex.org";
+        return "Podcast Index";
     }
 
     private Request buildAuthenticatedRequest(String url) {
@@ -100,7 +104,7 @@ public class PodcastIndexPodcastSearcher implements PodcastSearcher {
                 .addHeader("X-Auth-Date", apiHeaderTime)
                 .addHeader("X-Auth-Key", BuildConfig.PODCASTINDEX_API_KEY)
                 .addHeader("Authorization", hashString)
-                .addHeader("User-Agent", ClientConfig.USER_AGENT)
+                .addHeader("User-Agent", UserAgentInterceptor.USER_AGENT)
                 .url(url);
         return httpReq.build();
     }
