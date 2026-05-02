@@ -24,8 +24,6 @@ project.ext {
     googleMaterialVersion = "1.12.0"
 
     // Third-party
-    commonsioVersion = "2.5"
-    glideVersion = "4.11.0"
     commonslangVersion = "3.18.0"
     commonsioVersion = "2.5" // Recent versions cause ClassNotFoundException on Android 6
     jsoupVersion = "1.15.1"
